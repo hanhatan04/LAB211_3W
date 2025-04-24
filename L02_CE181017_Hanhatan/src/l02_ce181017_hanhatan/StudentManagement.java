@@ -12,18 +12,44 @@ import java.util.Scanner;
 public class StudentManagement {
 
     private ArrayList<Student> students;  // List to store student objects.
-    private Validator validator;  // Validator object for validating user inputs.
     private Scanner scanner;  // Scanner object for capturing user inputs.
 
     /**
-     * Constructor to initialize StudentManagement with an empty student list
-     * and a Validator object. The Scanner is also initialized to read inputs
-     * from the console.
+     * Constructor to initialize StudentManagement with an empty student list.
+     * The Scanner is initialized to read inputs from the console.
      */
     public StudentManagement() {
         this.students = new ArrayList<>();
-        this.validator = new Validator();
         this.scanner = new Scanner(System.in);
+    }
+
+    public void inputDatatoTest() {
+        students.add(new Student("SE001", "Nguyen Van A", "Java", "1"));
+        students.add(new Student("SE002", "Tran Thi B", ".Net", "2"));
+        students.add(new Student("SE003", "Le Van C", "C/C++", "3"));
+        students.add(new Student("SE004", "Pham Thi D", "Java", "1"));
+        students.add(new Student("SE005", "Hoang Van E", ".Net", "2"));
+        students.add(new Student("SE006", "Nguyen Thi F", "C/C++", "3"));
+        students.add(new Student("SE007", "Tran Van G", "Java", "4"));
+        students.add(new Student("SE008", "Le Thi H", ".Net", "1"));
+        students.add(new Student("SE009", "Pham Van I", "C/C++", "2"));
+        students.add(new Student("SE010", "Hoang Thi K", "Java", "3"));
+    }
+
+    public void addStudent() {
+        createStudent();
+        while (students.size() < 10) {
+            System.out.println("Do you want to order now (Y/N)");
+            String input = scanner.nextLine().trim().toUpperCase();
+            if (input.equals("Y")) {
+                createStudent();
+            } else if (input.equals("N")) {
+                break;
+            } else {
+                System.out.println("Error: Please enter Y or N!");
+            }
+        }
+
     }
 
     /**
@@ -31,82 +57,95 @@ public class StudentManagement {
      * the Student ID, course, and semester are valid. Avoids duplicate student
      * entries for the same course and semester.
      */
-    public void createStudent() {
-        String id = validator.getValidatedId().toUpperCase();  // Normalize the student ID to uppercase.
-        String name = null;
-        String course;
-        String semester;
+public void createStudent() {
+    Student newStudent = new Student("", "", "", "");
+    newStudent.input();
 
-        // Check if the student ID already exists in the system.
-        for (Student student : students) {
-            if (student.getId().equalsIgnoreCase(id)) {  // Case-insensitive comparison.
-                System.out.println("This ID already exists. Student name: " + student.getName());
-                name = student.getName();  // Reuse the existing student name.
-                break;
-            }
+    boolean checkId = false;
+    boolean checkSemester = false;
+    String existingName = null;
+
+    // Kiểm tra ID trùng và trùng khóa học-kỳ học
+    for (Student student : students) {
+        if (student.getId().equalsIgnoreCase(newStudent.getId())) {
+            checkId = true;
+            existingName = student.getName(); // Lưu tên hiện tại để đảm bảo nhất quán
         }
-
-        // If the student is new, prompt the user for the student's name.
-        if (name == null) {
-            name = validator.getValidatedName();  // Validate and retrieve the student's name.
+        if (student.getId().equalsIgnoreCase(newStudent.getId()) && 
+            student.getName().equalsIgnoreCase(newStudent.getName()) && 
+            student.getCourse().equalsIgnoreCase(newStudent.getCourse()) && 
+            student.getSemester().equalsIgnoreCase(newStudent.getSemester())) {
+            checkSemester = true;
         }
-
-        // Validate and retrieve the course name.
-        course = validator.getValidatedCourse();
-
-        // Ensure the student isn't already registered in the same course and semester.
-        while (true) {
-            semester = validator.getValidatedSemester();  // Validate and retrieve the semester.
-
-            boolean isDuplicate = false;
-            // Check for duplicate entries with the same student ID, course, and semester.
-            for (Student student : students) {
-                if (student.getId().equalsIgnoreCase(id) && student.getCourse().equals(course) && student.getSemester().equals(semester)) {
-                    System.out.println("This student has already registered for " + course + " in semester " + semester + ". Please enter a different semester.");
-                    isDuplicate = true;
-                    break;
-                }
-            }
-
-            // Break the loop if no duplicate entry is found.
-            if (!isDuplicate) {
-                break;
-            }
-        }
-
-        // Add the new student to the list after validation.
-        students.add(new Student(id, name, course, semester));
-        System.out.println("Student added successfully!");
     }
 
+    // Nếu dữ liệu hoàn toàn trùng (ID, tên, khóa học, kỳ học)
+    if (checkSemester) {
+        System.out.println("This data already exists in the system.");
+        return; // Thoát ra, không thêm sinh viên
+    }
+
+    // Nếu ID trùng nhưng không trùng khóa học-kỳ học
+    if (checkId) {
+        // Đảm bảo tên nhất quán
+        if (existingName != null && !newStudent.getName().equalsIgnoreCase(existingName)) {
+            System.out.println("Name changed to match existing student: " + existingName);
+            newStudent.setName(existingName);
+        }
+
+        // Hỏi người dùng có muốn lưu không
+        while (true) {
+            System.out.println("Id has been used, do you want to save the information you just entered for: " + newStudent.getName() + "? (Y/N)");
+            String choice = scanner.nextLine().trim().toUpperCase();
+            if (choice.equals("Y")) {
+                students.add(newStudent);
+                System.out.println("Student added successfully!");
+                return; // Thoát ra sau khi thêm
+            } else if (choice.equals("N")) {
+                System.out.println("Student information discarded.");
+                return; // Thoát ra, không thêm sinh viên
+            } else {
+                System.out.println("Invalid input. Please enter Y or N.");
+            }
+        }
+    }
+
+    // Nếu ID không trùng, thêm sinh viên bình thường
+    students.add(newStudent);
+    System.out.println("Student added successfully!");
+}
     /**
      * Function to find students by name (or partial name) and sort them by
      * name. Outputs the result in a formatted table showing the list of
      * students and their semesters.
      */
     public void findAndSort() {
+        if (students.isEmpty()) {
+            System.out.println("No students available in the system.");
+            return;
+        }
         System.out.print("Enter the student name or part of the name to search: ");
         String name = scanner.nextLine().trim();  // Get the name or part of the name for searching.
 
         // HashMap to group semesters by a key: "Student ID + Name + Course".
-        HashMap<String, ArrayList<String>> groupedData = new HashMap<>();
+        HashMap<String, ArrayList<String>> checkname = new HashMap<>();
 
         // Search for students whose name contains the given input (case-insensitive).
         for (Student student : students) {
             if (student.getName().toLowerCase().contains(name.toLowerCase())) {
                 String key = student.getId().toUpperCase() + " | " + student.getName() + " | " + student.getCourse();
                 // Group the semesters by the key.
-                groupedData.putIfAbsent(key, new ArrayList<>());
-                groupedData.get(key).add(student.getSemester());
+                checkname.putIfAbsent(key, new ArrayList<>());
+                checkname.get(key).add(student.getSemester());
             }
         }
 
         // Sort the students by name.
-        ArrayList<String> sortedKeys = new ArrayList<>(groupedData.keySet());
-        sortedKeys.sort((k1, k2) -> k1.split(" \\| ")[1].compareToIgnoreCase(k2.split(" \\| ")[1]));  // Sort by name part of the key.
+        ArrayList<String> sorted = new ArrayList<>(checkname.keySet());
+        sorted.sort((k1, k2) -> k1.split(" \\| ")[1].compareToIgnoreCase(k2.split(" \\| ")[1]));  // Sort by name part of the key.
 
         // Display the results in a formatted table.
-        if (sortedKeys.isEmpty()) {
+        if (sorted.isEmpty()) {
             System.out.println("No students found.");
         } else {
             System.out.println("+-----+--------------+--------------+--------+------------+");
@@ -114,9 +153,9 @@ public class StudentManagement {
             System.out.println("+-----+--------------+--------------+--------+------------+");
 
             int index = 1;
-            for (String key : sortedKeys) {
+            for (String key : sorted) {
                 String[] parts = key.split(" \\| ");
-                String semesters = String.join(",", groupedData.get(key));  // Join semesters into a comma-separated string.
+                String semesters = String.join(",", checkname.get(key));  // Join semesters into a comma-separated string.
                 System.out.printf("| %-3d | %-12s | %-12s | %-6s | %-10s |\n", index++, parts[0], parts[1], parts[2], semesters);
             }
             System.out.println("+-----+--------------+--------------+--------+------------+");
@@ -144,8 +183,8 @@ public class StudentManagement {
         }
 
         // Sort the student data by ID.
-        ArrayList<String> sortedKeys = new ArrayList<>(reportData.keySet());
-        sortedKeys.sort((k1, k2) -> k1.split(" \\| ")[0].compareToIgnoreCase(k2.split(" \\| ")[0]));  // Sort by student ID.
+        ArrayList<String> sorted = new ArrayList<>(reportData.keySet());
+        sorted.sort((k1, k2) -> k1.split(" \\| ")[0].compareToIgnoreCase(k2.split(" \\| ")[0]));  // Sort by student ID.
 
         // Print the report in a formatted table.
         System.out.println("+-----+--------------+--------------+--------+-----------------+");
@@ -153,7 +192,7 @@ public class StudentManagement {
         System.out.println("+-----+--------------+--------------+--------+-----------------+");
 
         int index = 1;
-        for (String key : sortedKeys) {
+        for (String key : sorted) {
             String[] parts = key.split(" \\| ");
             System.out.printf("| %-3d | %-12s | %-12s | %-6s | %-15d |\n", index++, parts[0], parts[1], parts[2], reportData.get(key));
         }
@@ -167,6 +206,10 @@ public class StudentManagement {
      * student's information or delete the record.
      */
     public void updateOrDelete() {
+        if (students.isEmpty()) {
+            System.out.println("No students available in the system.");
+            return;
+        }
         // Display all student records before updating or deleting.
         displayStudents();
 
@@ -252,6 +295,11 @@ public class StudentManagement {
 
                 // Check if the new name is already taken by another student with a different ID.
                 if (!newName.isEmpty()) {
+                    // Inline name validation
+                    if (!newName.matches("[a-zA-Z ]+")) {
+                        System.out.println("Invalid name. Please use letters and spaces only.");
+                        continue;
+                    }
                     boolean isNameDuplicate = false;
 
                     for (Student student : students) {
@@ -263,27 +311,29 @@ public class StudentManagement {
                     }
 
                     if (isNameDuplicate) {
-                        // Ask the user whether they want to keep the duplicated name.
-                        String keepNameChoice;
+                        // Inline inputYesNo()
+                        boolean keepName;
                         while (true) {
                             System.out.print("This name is already taken. Do you want to keep this name? (Y/N): ");
-                            keepNameChoice = scanner.nextLine().trim().toUpperCase();
-
-                            if (keepNameChoice.equals("Y")) {
-                                // If the user chooses "Y", keep the current name and stop asking for a new one.
-                                System.out.println("Name unchanged.");
-                                break;  // Exit inner loop.
-                            } else if (keepNameChoice.equals("N")) {
-                                // Prompt for a new name until a valid one is provided.
-                                System.out.println("Please enter a new name that is not duplicated!");
-                                break;  // Break out of the inner loop to prompt for a new name.
+                            String input = scanner.nextLine().trim().toUpperCase();
+                            if (input.equals("Y")) {
+                                keepName = true;
+                                break;
+                            } else if (input.equals("N")) {
+                                keepName = false;
+                                break;
                             } else {
-                                // Handle invalid input for Y/N.
-                                System.out.println("Invalid choice. Please enter 'Y' to keep the name or 'N' to enter a new one.");
+                                System.out.println("Error: Please enter Y or N!");
                             }
                         }
-                        if (keepNameChoice.equals("Y")) {
-                            break;  // Exit outer loop if user chooses to keep the current name.
+                        if (keepName) {
+                            // If the user chooses "Y", keep the current name and stop asking for a new one.
+                            System.out.println("Name unchanged.");
+                            break;  // Exit loop.
+                        } else {
+                            // Prompt for a new name until a valid one is provided.
+                            System.out.println("Please enter a new name that is not duplicated!");
+
                         }
                     } else {
                         // If the new name is not a duplicate, update the name for all records with the same ID.
@@ -301,7 +351,20 @@ public class StudentManagement {
             System.out.printf("Current course: %s. Enter new course (or press Enter to keep it): ", studentToUpdate.getCourse());
             String newCourse = scanner.nextLine().trim();
             if (!newCourse.isEmpty()) {
-                studentToUpdate.setCourse(validator.standardizeCourseName(newCourse));
+                // Inline course validation
+                if (newCourse.equalsIgnoreCase("Java") || newCourse.equalsIgnoreCase(".Net") || newCourse.equalsIgnoreCase("C/C++")) {
+                    // Inline standardizeCourseName()
+                    if (newCourse.equalsIgnoreCase("java")) {
+                        newCourse = "Java";
+                    } else if (newCourse.equalsIgnoreCase(".net")) {
+                        newCourse = ".Net";
+                    } else if (newCourse.equalsIgnoreCase("c/c++")) {
+                        newCourse = "C/C++";
+                    }
+                    studentToUpdate.setCourse(newCourse);
+                } else {
+                    System.out.println("Invalid course. Course unchanged.");
+                }
             }
 
             // 3. Update Semester: Validate and change semester if entered, ensuring no duplicates.
@@ -312,6 +375,7 @@ public class StudentManagement {
                     break;  // Keep the current semester if input is blank.
                 }
 
+                // Allow any non-empty string for semester updates, per original behavior
                 // Check if the student is already registered for the same course and semester.
                 boolean isDuplicate = false;
                 for (Student student : students) {
@@ -323,11 +387,11 @@ public class StudentManagement {
                 }
 
                 // Update the semester if no duplicate is found.
-                if (!isDuplicate) {
+                if (!isDuplicate && newSemester.matches("[0-9]+")) {
                     studentToUpdate.setSemester(newSemester);
                     break;
                 } else {
-                    System.out.println("Please enter a different semester.");
+                    System.out.println("Semester must be Interger");
                 }
             }
 
@@ -336,7 +400,7 @@ public class StudentManagement {
         } else if (choice.equals("D")) {
             // Delete the selected student.
             while (true) {
-                System.out.print("Enter '1' to remove all students with this ID, or '2' to remove this specific line: ");
+                System.out.print("Enter '1' to remove all students with this ID, '2' to remove this specific line or '3' to cancel: ");
                 String deleteChoice = scanner.nextLine().trim();
 
                 if (deleteChoice.equals("1")) {
@@ -349,9 +413,12 @@ public class StudentManagement {
                     students.remove(studentToUpdate);  // Remove the specific student entry.
                     System.out.println("Selected student line has been removed.");
                     break;  // Exit loop.
+                } else if (deleteChoice.equals("3")) {
+                    System.out.println("Cancel remove.");
+                    break;
                 } else {
                     // Handle invalid input for deletion choice.
-                    System.out.println("Invalid input. Please enter '1' to remove all or '2' to remove this line.");
+                    System.out.println("Invalid input. Please enter '1' to remove all or '2' to remove this line or '3' to cancel remove.");
                 }
             }
         } else {
@@ -384,4 +451,5 @@ public class StudentManagement {
 
         System.out.println("+-----+--------------+--------------+--------+------------+");
     }
+
 }
